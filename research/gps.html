@@ -17,7 +17,7 @@
   <body>
     <div style="font-size: 2rem">
       <button id="find-me" style="height: 5rem; font-size: 2rem;">現在地表示</button>
-      <span style="padding-left: .2rem;">v4</span>
+      <span style="padding-left: .2rem;">v5</span>
     </div>
     <div id="status" style="font-size: 2rem"></div>
     <div id="map" class="map"></div>
@@ -82,9 +82,9 @@
           // alert("lat:" + latitude + " / lon:" + longitude + " / heading:" + heading );
           status.textContent = "lat:" + latitude + " / lon:" + longitude +
              " / heading:" + heading + " / accuracy:" + accuracy + " / altitudeAccuracy:" + altitudeAccuracy;
-          if (heading) {
-            map.getView().setRotation(heading);
-          }
+          // if (heading) {
+          //   map.getView().setRotation(heading);
+          // }
           if (latitude && longitude) {
             map.getView().setCenter(ol.proj.fromLonLat([longitude, latitude]));
             iconFeature.setGeometry(new ol.geom.Point(ol.proj.fromLonLat([longitude, latitude])));
@@ -105,6 +105,17 @@
           // navigator.geolocation.getCurrentPosition(success, error);
           navigator.geolocation.watchPosition(success, error, {enableHighAccuracy: true});
         }
+
+
+        function handleOrientation(event) {
+          var absolute = event.absolute;
+          var alpha    = event.alpha;
+          var beta     = event.beta;
+          var gamma    = event.gamma;
+
+          map.getView().setRotation(alpha);
+        }
+        window.addEventListener("deviceorientation", handleOrientation, true);
 
       }
 
