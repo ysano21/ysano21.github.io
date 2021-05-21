@@ -15,7 +15,8 @@
     <title>OpenLayers example</title>
   </head>
   <body>
-    <div style="font-size: 2rem"><button id="find-me" style="height: 5rem; font-size: 2rem;">現在地表示</button><spna id="status"></spna></div>
+    <div style="font-size: 2rem"><button id="find-me" style="height: 5rem; font-size: 2rem;">現在地表示</button><span style="padding-left: .2rem;">v3</span></div>
+    <div id="status" style="font-size: 2rem"></div>
     <div id="map" class="map"></div>
     <script type="text/javascript">
       var map = new ol.Map({
@@ -40,12 +41,16 @@
         // mapLink.textContent = '';
 
         function success(position) {
+          // https://developer.mozilla.org/ja/docs/Web/API/GeolocationCoordinates
           const latitude  = position.coords.latitude;
           const longitude = position.coords.longitude;
           const heading = position.coords.heading;
+          const accuracy = position.coords.accuracy;
+          const altitudeAccuracy = position.coords.altitudeAccuracy;
 
           // alert("lat:" + latitude + " / lon:" + longitude + " / heading:" + heading );
-          status.textContent = "lat:" + latitude + " / lon:" + longitude + " / heading:" + heading;
+          status.textContent = "lat:" + latitude + " / lon:" + longitude +
+             " / heading:" + heading + " / accuracy:" + accuracy + " / altitudeAccuracy:" + altitudeAccuracy;
           if (heading) {
             map.getView().setRotation(heading);
           }
