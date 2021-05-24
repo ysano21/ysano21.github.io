@@ -17,9 +17,9 @@
   <body>
     <div style="font-size: 2rem">
       <button id="find-me" style="height: 5rem; font-size: 2rem;">現在地表示</button>
-      <span style="padding-left: .2rem;">v7</span>
+      <span style="padding-left: .2rem;">v8</span>
     </div>
-    <div id="status" style="font-size: 2rem"></div>
+    <div style="font-size: 2rem"><span id="status"></span><span id="status2"></span></div>
     <div id="map" class="map"></div>
     <script type="text/javascript">
       // Iconオブジェクト設定
@@ -66,6 +66,7 @@
       function geoFindMe() {
 
         const status = document.querySelector('#status');
+        const status2 = document.querySelector('#status2');
         // const mapLink = document.querySelector('#map-link');
 
         // mapLink.href = '';
@@ -107,25 +108,56 @@
         }
 
 
+        /*
+         * 角度
+         */
         function handleOrientation(event) {
           var absolute = event.absolute;
           var alpha    = event.alpha;
           var beta     = event.beta;
           var gamma    = event.gamma;
 
-          map.getView().setRotation(-(alpha * (Math.PI / 180)));
+          let alphatxt = " / alpha: " + alpha;
+          if (absolute) {
+            alphatxt = alphatxt + "*";
+          }
+          status2.textContent = alphatxt;
+          map.getView().setRotation(-((360 - alpha) * (Math.PI / 180)));
+
         }
         window.addEventListener("deviceorientation", handleOrientation, true);
+        // window.addEventListener("deviceorientationabsolute", handleOrientation);
 
 
         // const sensor = new AbsoluteOrientationSensor();
+        // sensor.addEventListener('reading', () => {
+        //   // model is a Three.js object instantiated elsewhere.
+        //   // model.quaternion.fromArray(sensor.quaternion).inverse();
+        //   const q1 = sensor.quaternion[0];
+        //   const q2 = sensor.quaternion[1];
+        //   const q3 = sensor.quaternion[2];
+        //   const q4 = sensor.quaternion[3];
+        //   // https://www.kazetest.com/vcmemo/quaternion/quaternion.htm
+        //   // roll
+        //   const c = 2*(q1*q2 + q3*q4)/(Math.sqrt(q1) - Math.sqrt(q2) - Math.sqrt(q3) + Math.sqrt(q4));
+        //   const roll = Math.atan(Math.round(c * Math.pow( 10, 6 )) / Math.pow( 10, 6 ))
+        //   // pitch
+        //   // const pitch = Math.asin(Math.round(2*(q1*q3 - q2*q4) * Math.pow( 10, 6 )) / Math.pow( 10, 6 ))
+
+        //   console.log("sensor: " + roll);
+        // });
+        // sensor.addEventListener('error', error => {
+        //   if (event.error.name == 'NotReadableError') {
+        //     console.log("Sensor is not available.");
+        //   }
+        // });
         // Promise.all([navigator.permissions.query({ name: "accelerometer" }),
         //             navigator.permissions.query({ name: "magnetometer" }),
         //             navigator.permissions.query({ name: "gyroscope" })])
         //       .then(results => {
         //         if (results.every(result => result.state === "granted")) {
-        //           sensor.start();
-        //           ...
+        //           const options = { frequency: 60, referenceFrame: 'device' };
+        //           sensor.start(options);
         //         } else {
         //           console.log("No permissions to use AbsoluteOrientationSensor.");
         //         }
