@@ -17,7 +17,7 @@
   <body>
     <div style="font-size: 2rem">
       <button id="find-me" style="height: 5rem; font-size: 2rem;">現在地表示</button>
-      <span style="padding-left: .2rem;">v6</span>
+      <span style="padding-left: .2rem;">v7</span>
     </div>
     <div id="status" style="font-size: 2rem"></div>
     <div id="map" class="map"></div>
@@ -113,7 +113,7 @@
           var beta     = event.beta;
           var gamma    = event.gamma;
 
-          map.getView().setRotation((alpha * (Math.PI / 180)));
+          map.getView().setRotation(-(alpha * (Math.PI / 180)));
         }
         window.addEventListener("deviceorientation", handleOrientation, true);
 
