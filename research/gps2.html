@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.5.0/css/ol.css" type="text/css">
+    <style>
+      html, body {
+        height: 100%;
+      }
+      .map {
+        height: 80%;
+        width: 100%;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.5.0/build/ol.js"></script>
+    <title>OpenLayers example</title>
+  </head>
+  <body>
+    <div style="font-size: 2rem">
+      <button id="find-me" style="height: 5rem; font-size: 2rem;">現在地表示</button>
+      <span style="padding-left: .2rem;">v8</span>
+    </div>
+    <div style="font-size: 2rem"><span id="status"></span><span id="status2"></span></div>
+    <div id="map" class="map"></div>
+    <script type="text/javascript">
+      // Iconオブジェクト設定
+      const iconFeature = new ol.Feature({
+          geometry: new ol.geom.Point(ol.proj.fromLonLat([139.7671, 35.6810])),
+          name: '東京駅だよ!!'
+      });
+
+      // Iconスタイル設定
+      const iconStyle = new ol.style.Style({
+          image: new ol.style.Icon({
+              src: 'Orion_pin.png'
+          })
+      });
+
+      // Iconソース設定
+      const vectorSource = new ol.source.Vector({
+          features: [iconFeature]
+      });
+
+      // Iconレイヤ設定
+      const vectorLayer = new ol.layer.Vector({
+          source: vectorSource,
+          style: iconStyle
+      });
+
+    
+      var map = new ol.Map({
+        target: 'map',
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM()
+          }),
+          vectorLayer
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([38.41, 8.82]),
+          zoom: 4
+        })
+      });
+
+
+
+      function geoFindMe() {
+
+        const status = document.querySelector('#status');
+        const status2 = document.querySelector('#status2');
+        // const mapLink = document.querySelector('#map-link');
+
+        // mapLink.href = '';
+        // mapLink.textContent = '';
+
+        function success(position) {
+          // https://developer.mozilla.org/ja/docs/Web/API/GeolocationCoordinates
+          const latitude  = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          const heading = position.coords.heading;
+          const accuracy = position.coords.accuracy;
+          const altitudeAccuracy = position.coords.altitudeAccuracy;
+
+          // alert("lat:" + latitude + " / lon:" + longitude + " / heading:" + heading );
+          status.textContent = "lat:" + latitude + " / lon:" + longitude +
+             " / heading:" + heading + " / accuracy:" + accuracy + " / altitudeAccuracy:" + altitudeAccuracy;
+          // if (heading) {
+          //   map.getView().setRotation(heading);
+          // }
+          if (latitude && longitude) {
+            map.getView().setCenter(ol.proj.fromLonLat([longitude, latitude]));
+            iconFeature.setGeometry(new ol.geom.Point(ol.proj.fromLonLat([longitude, latitude])));
+          }
+          // status.textContent = '';
+          // mapLink.href = `https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`;
+          // mapLink.textContent = `Latitude: ${latitude} °, Longitude: ${longitude} °`;
+        }
+
+        function error() {
+          status.textContent = 'Unable to retrieve your location';
+        }
+
+        if(!navigator.geolocation) {
+          status.textContent = 'Geolocation is not supported by your browser';
+        } else {
+          status.textContent = 'Locating…';
+          // navigator.geolocation.getCurrentPosition(success, error);
+          navigator.geolocation.watchPosition(success, error, {enableHighAccuracy: true});
+        }
+
+
+        /*
+         * 角度
+         */
+        function handleOrientation(event) {
+          var absolute = event.absolute;
+          var alpha    = event.alpha;
+          var beta     = event.beta;
+          var gamma    = event.gamma;
+
+          let alphatxt = " / alpha: " + alpha;
+          if (absolute) {
+            alphatxt = alphatxt + "*";
+          }
+          status2.textContent = alphatxt;
+          map.getView().setRotation(-((360 - alpha) * (Math.PI / 180)));
+
+        }
+        // window.addEventListener("deviceorientation", handleOrientation, true);
+        window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+
+
+        // const sensor = new AbsoluteOrientationSensor();
+        // sensor.addEventListener('reading', () => {
+        //   // model is a Three.js object instantiated elsewhere.
+        //   // model.quaternion.fromArray(sensor.quaternion).inverse();
+        //   const q1 = sensor.quaternion[0];
+        //   const q2 = sensor.quaternion[1];
+        //   const q3 = sensor.quaternion[2];
+        //   const q4 = sensor.quaternion[3];
+        //   // https://www.kazetest.com/vcmemo/quaternion/quaternion.htm
+        //   // roll
+        //   const c = 2*(q1*q2 + q3*q4)/(Math.sqrt(q1) - Math.sqrt(q2) - Math.sqrt(q3) + Math.sqrt(q4));
+        //   const roll = Math.atan(Math.round(c * Math.pow( 10, 6 )) / Math.pow( 10, 6 ))
+        //   // pitch
+        //   // const pitch = Math.asin(Math.round(2*(q1*q3 - q2*q4) * Math.pow( 10, 6 )) / Math.pow( 10, 6 ))
+
+        //   console.log("sensor: " + roll);
+        // });
+        // sensor.addEventListener('error', error => {
+        //   if (event.error.name == 'NotReadableError') {
+        //     console.log("Sensor is not available.");
+        //   }
+        // });
+        // Promise.all([navigator.permissions.query({ name: "accelerometer" }),
+        //             navigator.permissions.query({ name: "magnetometer" }),
+        //             navigator.permissions.query({ name: "gyroscope" })])
+        //       .then(results => {
+        //         if (results.every(result => result.state === "granted")) {
+        //           const options = { frequency: 60, referenceFrame: 'device' };
+        //           sensor.start(options);
+        //         } else {
+        //           console.log("No permissions to use AbsoluteOrientationSensor.");
+        //         }
+        //   });
+      }
+
+      document.querySelector('#find-me').addEventListener('click', geoFindMe);
+    </script>
+  </body>
+</html>
