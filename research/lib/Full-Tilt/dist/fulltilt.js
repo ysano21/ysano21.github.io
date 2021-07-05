@@ -946,18 +946,18 @@ FULLTILT.DeviceOrientation = function (options) {
 
 				// Discard first {successThreshold} responses while a better compass lock is found by UA
 				if(++successCount >= successThreshold) {
-					window.removeEventListener( 'deviceorientationabsolute', setGameAlphaOffset, false );
+					window.removeEventListener( 'deviceorientation', setGameAlphaOffset, false );
 					return;
 				}
 			}
 
 			if(++tries >= maxTries) {
-				window.removeEventListener( 'deviceorientationabsolute', setGameAlphaOffset, false );
+				window.removeEventListener( 'deviceorientation', setGameAlphaOffset, false );
 			}
 
 		}.bind(this);
 
-		window.addEventListener( 'deviceorientationabsolute', setGameAlphaOffset, false );
+		window.addEventListener( 'deviceorientation', setGameAlphaOffset, false );
 
 	// Create a compass-based deviceorientation object (initial alpha === compass degrees)
 	} else if (this.options.type === "world") {
@@ -971,18 +971,18 @@ FULLTILT.DeviceOrientation = function (options) {
 
 				// Discard first {successThreshold} responses while a better compass lock is found by UA
 				if(++successCount >= successThreshold) {
-					window.removeEventListener( 'deviceorientationabsolute', setCompassAlphaOffset, false );
+					window.removeEventListener( 'deviceorientation', setCompassAlphaOffset, false );
 					return;
 				}
 			}
 
 			if(++tries >= maxTries) {
-				window.removeEventListener( 'deviceorientationabsolute', setCompassAlphaOffset, false );
+				window.removeEventListener( 'deviceorientation', setCompassAlphaOffset, false );
 			}
 
 		}.bind(this);
 
-		window.addEventListener( 'deviceorientationabsolute', setCompassAlphaOffset, false );
+		window.addEventListener( 'deviceorientation', setCompassAlphaOffset, false );
 
 	} // else... use whatever orientation system the UA provides ("game" on iOS, "world" on Android)
 
@@ -1016,7 +1016,7 @@ FULLTILT.DeviceOrientation.prototype = {
 
 		if ( !sensors.orientation.active ) {
 
-			window.addEventListener( 'deviceorientationabsolute', handleDeviceOrientationChange, false );
+			window.addEventListener( 'deviceorientation', handleDeviceOrientationChange, false );
 
 			sensors.orientation.active = true;
 
@@ -1028,7 +1028,7 @@ FULLTILT.DeviceOrientation.prototype = {
 
 		if ( sensors.orientation.active ) {
 
-			window.removeEventListener( 'deviceorientationabsolute', handleDeviceOrientationChange, false );
+			window.removeEventListener( 'deviceorientation', handleDeviceOrientationChange, false );
 
 			sensors.orientation.active = false;
 
