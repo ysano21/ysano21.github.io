@@ -138,9 +138,6 @@
 
           var alpha = euler.alpha;
           let alphatxt = " / alpha: " + alpha;
-          if (absolute) {
-            alphatxt = alphatxt + "*";
-          }
           status2.textContent = alphatxt;
           map.getView().setRotation(-((360 - alpha) * (Math.PI / 180)));
         }
