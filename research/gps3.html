@@ -18,7 +18,7 @@
   <body>
     <div style="font-size: 2rem">
       <button id="find-me" style="height: 5rem; font-size: 2rem;">現在地表示</button>
-      <span style="padding-left: .2rem;">3 v10</span>
+      <span style="padding-left: .2rem;">3 v11</span>
     </div>
     <div style="font-size: 2rem"><span id="status"></span><span id="status2"></span></div>
     <div id="map" class="map"></div>
@@ -141,8 +141,51 @@
           status2.textContent = alphatxt;
           map.getView().setRotation(-((360 - alpha) * (Math.PI / 180)));
         }
+
+        function handleOrientation3(event) {
+            var absolute = event.absolute;
+            var alpha    = event.alpha;
+            var beta     = event.beta;
+            var gamma    = event.gamma;
+            var degtorad = Math.PI / 180; /*  度° ↔ ラジアン 間の換算用  */
+
+            function compassHeading( alpha, beta, gamma ) {
+
+              var _x = beta  ? beta  * degtorad : 0; // β 値
+              var _y = gamma ? gamma * degtorad : 0; // γ 値
+              var _z = alpha ? alpha * degtorad : 0; // α 値
+
+              var cX = Math.cos( _x );
+              var cY = Math.cos( _y );
+              var cZ = Math.cos( _z );
+              var sX = Math.sin( _x );
+              var sY = Math.sin( _y );
+              var sZ = Math.sin( _z );
+
+              /*  V の x , y 成分を計算する  */
+              var Vx = - cZ * sY - sZ * sX * cY;
+              var Vy = - sZ * sY + cZ * sX * cY;
+
+              /*  コンパスの向きを計算する  */
+              var compassHeading = Math.atan( Vx / Vy );
+
+              /*  コンパスの向きを， 0 以上 2 π 未満に換算する  */
+              if( Vy < 0 ) {
+                compassHeading += Math.PI;
+              } else if( Vx < 0 ) {
+                compassHeading += 2 * Math.PI;
+              }
+
+              return compassHeading * ( 180 / Math.PI ); /*  度°によるコンパスの向き  */
+          }
+
+          let heading = compassHeading( alpha, beta, gamma);
+          let alphatxt = " / heading: " + heading;
+          status2.textContent = alphatxt;
+          map.getView().setRotation(heading);
+        }
         // window.addEventListener("deviceorientation", handleOrientation, true);
-        window.addEventListener("deviceorientationabsolute", handleOrientation2, true);
+        window.addEventListener("deviceorientationabsolute", handleOrientation3, true);
 
 
         /*
