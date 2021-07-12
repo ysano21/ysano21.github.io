@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <meta charset="utf-8"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.5.0/css/ol.css" type="text/css">
     <style>
       html, body {
@@ -8,59 +9,79 @@
       }
       .map {
         height: 50%;
-        width: 100%;
+        width: 50%;
       }
     </style>
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.5.0/build/ol.js"></script>
     <title>OpenLayers example</title>
   </head>
   <body>
-    <div id="map" class="map"></div>
+    <!-- map object -->
+    <div id="map" class="map" style="float: left;"></div>
+    <div id="map2" class="map" style="float: left;"></div>
+    <div>左：補正有／右：補正無し</div>
+    <!-- controller -->
     <div style="font-size: 2rem">
       <button id="find-me" style="height: 5rem; font-size: 2rem;">現在地表示</button>
-      <span style="padding-left: .2rem;">v12</span>
+      <input type="number" id="declination" max="360" min="360" value="-8.8">
+      <input type="checkbox" id="fixcenter" name="fixcenter">
+      <label for="fixcenter">自動追尾</label>
+      <span style="padding-left: .2rem;">v19</span>
     </div>
-    <div style="font-size: 2rem"><span id="status"></span><span id="status2"></span></div>
+    <!-- status -->
+    <div style="font-size: 2rem">
+      <span id="status"></span>
+      <span id="status2"></span>
+    </div>
+
     <script type="text/javascript">
-      // Iconオブジェクト設定
-      const iconFeature = new ol.Feature({
-          geometry: new ol.geom.Point(ol.proj.fromLonLat([139.7671, 35.6810])),
-          name: '東京駅だよ!!'
-      });
+      var mapsId = ['map', 'map2'];
+      var maps = {};
+      for (var n of mapsId) {
+        // Iconオブジェクト設定
+        const iconFeature = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.fromLonLat([139.7671, 35.6810])),
+            name: '東京駅だよ!!'
+        });
 
-      // Iconスタイル設定
-      const iconStyle = new ol.style.Style({
-          image: new ol.style.Icon({
-              src: 'Orion_pin.png'
-          })
-      });
+        // Iconスタイル設定
+        const iconStyle = new ol.style.Style({
+            image: new ol.style.Icon({
+                src: 'Orion_pin.png'
+            })
+        });
 
-      // Iconソース設定
-      const vectorSource = new ol.source.Vector({
-          features: [iconFeature]
-      });
+        // Iconソース設定
+        const vectorSource = new ol.source.Vector({
+            features: [iconFeature]
+        });
 
-      // Iconレイヤ設定
-      const vectorLayer = new ol.layer.Vector({
+        // Iconレイヤ設定
+        const vectorLayer = new ol.layer.Vector({
           source: vectorSource,
           style: iconStyle
-      });
+        });
 
-    
-      var map = new ol.Map({
-        target: 'map',
-        layers: [
-          new ol.layer.Tile({
-            source: new ol.source.OSM()
-          }),
-          vectorLayer
-        ],
-        view: new ol.View({
-          center: ol.proj.fromLonLat([38.41, 8.82]),
-          zoom: 4
+        const map = new ol.Map({
+          target: n,
+          layers: [
+            new ol.layer.Tile({
+              source: new ol.source.OSM()
+            }),
+            vectorLayer
+          ],
+          view: new ol.View({
+            center: ol.proj.fromLonLat([38.41, 8.82]),
+            zoom: 4
+          })
         })
-      });
 
+        maps[n] = {
+          "map": map,
+          "layer": vectorLayer,
+          "feature": iconFeature,
+        };
+      }
 
 
       function geoFindMe() {
@@ -71,14 +92,24 @@
           // https://developer.mozilla.org/ja/docs/Web/API/GeolocationCoordinates
           const latitude  = position.coords.latitude;
           const longitude = position.coords.longitude;
-          const heading = position.coords.heading;
-          const accuracy = position.coords.accuracy;
-          const altitudeAccuracy = position.coords.altitudeAccuracy;
+          // const heading = position.coords.heading;
+          // const accuracy = position.coords.accuracy;
+          // const altitudeAccuracy = position.coords.altitudeAccuracy;
 
           status.textContent = "lat:" + latitude + " / lon:" + longitude;
           if (latitude && longitude) {
-            map.getView().setCenter(ol.proj.fromLonLat([longitude, latitude]));
-            iconFeature.setGeometry(new ol.geom.Point(ol.proj.fromLonLat([longitude, latitude])));
+            for (var m of mapsId) {
+              let map = maps[m]["map"];
+              let iconFeature = maps[m]["feature"];
+              // アイコン位置変更
+              if (getFixCenter()) {
+                map.getView().setCenter(ol.proj.fromLonLat([longitude, latitude]));
+                if (map.getView().getZoom() < 17) {
+                  map.getView().setZoom(18);
+                }
+                iconFeature.setGeometry(new ol.geom.Point(ol.proj.fromLonLat([longitude, latitude])));
+              }
+            }
           }
         }
 
@@ -101,68 +132,74 @@
         var initAbsoluteAlpha = null;
         var correctionAlpha = null;
         function handleOrientation(event) {
+          const absolute = event.absolute;
+          const alpha    = event.alpha;
+          // const beta     = event.beta;
+          // const gamma    = event.gamma;
+          let alphatxt = " / alpha: " + alpha;
+          if (absolute) {
+            alphatxt = alphatxt + "*";
+          }
+          status2.textContent = alphatxt;
+
+          setCorrectonOrientation(event, maps['map2']["map"])
+        }
+        function handleAbsoluteOrientation(event) {
+          setOrientation(event, maps['map']["map"]);
+        }
+
+        function saveAbsoluteAlpha(event) {
+          if (! initAbsoluteAlpha) {
+            if (event.alpha) {
+              initAbsoluteAlpha = event.alpha;
+              window.removeEventListener("deviceorientationabsolute", saveAbsoluteAlpha, true);
+            }
+          }
+          // var absolute = event.absolute;
+          //   var alpha    = event.alpha;
+          //   var beta     = event.beta;
+          //   var gamma    = event.gamma;
+          //   maps[1].getView().setRotation(alpha * (Math.PI / 180));
+          // window.addEventListener("deviceorientationabsolute", saveAbsoluteAlpha, true);
+        }
+        function setOrientation(evntOrientation, objMap) {
+          const absolute = event.absolute;
+          const alpha    = event.alpha;
+          objMap.getView().setRotation(fixDeclination(alpha) * (Math.PI / 180));
+        }
+        function setCorrectonOrientation(evntOrientation, objMap) {
           if (correctionAlpha) {
-            var absolute = event.absolute;
-            var alpha    = event.alpha;
-            var beta     = event.beta;
-            var gamma    = event.gamma;
-            var fixAlpha = alpha - correctionAlpha + initAbsoluteAlpha;
+            const absolute = event.absolute;
+            const alpha    = event.alpha;
+            // const beta     = event.beta;
+            // const gamma    = event.gamma;
+
+            let fixAlpha = alpha - correctionAlpha + initAbsoluteAlpha;
             fixAlpha = fixAlpha - 360 * Math.floor(fixAlpha / 360);
 
-            let alphatxt = " / alpha: " + alpha;
-            if (absolute) {
-              alphatxt = alphatxt + "*";
-            }
-            status2.textContent = alphatxt;
-            map.getView().setRotation(fixAlpha * (Math.PI / 180));
+            objMap.getView().setRotation(fixDeclination(fixAlpha) * (Math.PI / 180));
           } else if (initAbsoluteAlpha) {
             correctionAlpha = event.alpha;
           }
         }
-        function saveAbsoluteAlpha(event) {
-          if (event.alpha) {
-            initAbsoluteAlpha = event.alpha;
-          }
-          window.addEventListener("deviceorientationabsolute", saveAbsoluteAlpha, true);
+        /**
+         * 偏角の修正
+         * 新潟: 8.8 deg/旭川: 9 deg
+         */
+        function fixDeclination(north, lat, lng) {
+         return north - getdeclination();
         }
         window.addEventListener("deviceorientation", handleOrientation, true);
         window.addEventListener("deviceorientationabsolute", saveAbsoluteAlpha, true);
-        // window.addEventListener("deviceorientationabsolute", handleOrientation);
+        window.addEventListener("deviceorientationabsolute", handleAbsoluteOrientation, true);
+        document.querySelector('#fixcenter').checked = true;
+      }
 
-
-        // const sensor = new AbsoluteOrientationSensor();
-        // sensor.addEventListener('reading', () => {
-        //   // model is a Three.js object instantiated elsewhere.
-        //   // model.quaternion.fromArray(sensor.quaternion).inverse();
-        //   const q1 = sensor.quaternion[0];
-        //   const q2 = sensor.quaternion[1];
-        //   const q3 = sensor.quaternion[2];
-        //   const q4 = sensor.quaternion[3];
-        //   // https://www.kazetest.com/vcmemo/quaternion/quaternion.htm
-        //   // roll
-        //   const c = 2*(q1*q2 + q3*q4)/(Math.sqrt(q1) - Math.sqrt(q2) - Math.sqrt(q3) + Math.sqrt(q4));
-        //   const roll = Math.atan(Math.round(c * Math.pow( 10, 6 )) / Math.pow( 10, 6 ))
-        //   // pitch
-        //   // const pitch = Math.asin(Math.round(2*(q1*q3 - q2*q4) * Math.pow( 10, 6 )) / Math.pow( 10, 6 ))
-
-        //   console.log("sensor: " + roll);
-        // });
-        // sensor.addEventListener('error', error => {
-        //   if (event.error.name == 'NotReadableError') {
-        //     console.log("Sensor is not available.");
-        //   }
-        // });
-        // Promise.all([navigator.permissions.query({ name: "accelerometer" }),
-        //             navigator.permissions.query({ name: "magnetometer" }),
-        //             navigator.permissions.query({ name: "gyroscope" })])
-        //       .then(results => {
-        //         if (results.every(result => result.state === "granted")) {
-        //           const options = { frequency: 60, referenceFrame: 'device' };
-        //           sensor.start(options);
-        //         } else {
-        //           console.log("No permissions to use AbsoluteOrientationSensor.");
-        //         }
-        //   });
+      function getFixCenter() {
+        return !!document.querySelector('#fixcenter').checked;
+      }
+      function getdeclination() {
+        return document.querySelector('#declination').value;
       }
 
       document.querySelector('#find-me').addEventListener('click', geoFindMe);
