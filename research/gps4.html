@@ -1,11 +1,18 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <meta name="viewport" content="width=device-width"> 
     <meta charset="utf-8"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.5.0/css/ol.css" type="text/css">
     <style>
       html, body {
         height: 100%;
+      }
+      html {
+        font-size: 10px;
+      }
+      body {
+        font-size: 2rem;
       }
       .map {
         height: 50%;
@@ -23,7 +30,8 @@
     <!-- controller -->
     <div style="font-size: 2rem">
       <button id="find-me" style="height: 5rem; font-size: 2rem;">現在地表示</button>
-      <input type="number" id="declination" max="360" min="360" value="-8.8">
+      <!-- 新潟:8.8／旭川市: 9.95 -->
+      <input type="number" id="declination" max="360" min="360" value="-9.95">
       <input type="checkbox" id="fixcenter" name="fixcenter">
       <label for="fixcenter">自動追尾</label>
       <span style="padding-left: .2rem;">v19</span>
